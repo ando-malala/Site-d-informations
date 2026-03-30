@@ -3,7 +3,7 @@ USE site_info;
 -- 1. Insertion d'un utilisateur (Administrateur/Journaliste)
 -- Note : Dans un vrai projet, le mot de passe serait haché avec password_hash() en PHP
 INSERT INTO user (username, email, password, role) VALUES 
-('Jean_Reporter', 'j.reporter@info-iran.com', '$2y$10$S8lXN.L8Xf8R8.R8Xf8R8.R8Xf8R8.R8Xf8R8.', 'admin');
+('Admin', 'admin@gmail.com', '$2y$10$JkEMqgUJCBVp.CA.aNCs1.iccEeAkfI2nFuly0aMLLVZlozE5X9PW', 'admin');
 
 -- 2. Insertion des types de sources
 INSERT INTO type_source (name) VALUES 
