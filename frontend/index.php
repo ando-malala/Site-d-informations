@@ -35,10 +35,7 @@
                     <li class="nav-item"><a class="nav-link" href="#">Sport</a></li>
                     <li class="nav-item"><a class="nav-link" href="#">Culture</a></li>
                 </ul>
-                <form class="d-flex">
-                    <input class="form-control me-2" type="search" placeholder="Rechercher...">
-                    <button class="btn btn-outline-light" type="submit"><i class="fa-solid fa-magnifying-glass"></i></button>
-                </form>
+                <a href="../backend/pages/index.php" class="btn btn-outline-light">Accès Admin</a>
             </div>
         </div>
     </nav>
