@@ -30,12 +30,13 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item"><a class="nav-link active" href="#">Accueil</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#">Politique</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#">Technologie</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#">Sport</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#">Culture</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#">Article</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#">ArticcleImage</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#">CategoryArticle</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#">Source</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#">TypeSource</a></li>
                 </ul>
-                <a href="../../frontend/index.php" class="btn btn-outline-light">Frontend</a>
+                <a href="../../frontoffice/index.php" class="btn btn-outline-light">Frontend</a>
             </div>
         </div>
     </nav>

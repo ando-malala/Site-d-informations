@@ -35,7 +35,7 @@
                     <li class="nav-item"><a class="nav-link" href="#">Sport</a></li>
                     <li class="nav-item"><a class="nav-link" href="#">Culture</a></li>
                 </ul>
-                <a href="../backend/pages/index.php" class="btn btn-outline-light">Accès Admin</a>
+                <a href="../backoffice/pages/index.php" class="btn btn-outline-light">Accès Admin</a>
             </div>
         </div>
     </nav>
