@@ -13,10 +13,17 @@ if (!empty($slug)) {
     try {
         $conn = getConnection();
         $sql = "SELECT a.id, a.title, a.slug, a.summary, a.content, a.created_at, c.name AS category_name, u.username AS author_name,
-                s.name AS source_name, s.url AS source_url, COALESCE(ai_main.image_url, ai_any.image_url) AS image_url, COALESCE(ai_main.alt_text, ai_any.alt_text) AS alt_text
+                s.name AS source_name, s.url AS source_url, ai.image_url AS image_url, ai.alt_text AS alt_text
                 FROM article a LEFT JOIN category_article c ON a.category_id = c.id LEFT JOIN user u ON a.user_id = u.id
-                LEFT JOIN source s ON a.source_id = s.id LEFT JOIN article_image ai_main ON ai_main.article_id = a.id AND ai_main.is_main = 1
-                LEFT JOIN article_image ai_any ON ai_any.article_id = a.id WHERE a.slug = ? AND a.status = 'publie' GROUP BY a.id";
+                LEFT JOIN source s ON a.source_id = s.id
+                LEFT JOIN article_image ai ON ai.id = (
+                    SELECT ai2.id
+                    FROM article_image ai2
+                    WHERE ai2.article_id = a.id
+                    ORDER BY ai2.is_main DESC, ai2.id ASC
+                    LIMIT 1
+                )
+                WHERE a.slug = ? AND a.status = 'publie'";
         $stmt = $conn->prepare($sql); $stmt->bind_param("s", $slug); $stmt->execute(); $result = $stmt->get_result();
         
         if ($result->num_rows > 0) {

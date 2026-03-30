@@ -35,12 +35,16 @@ try {
                 a.status,
                 a.created_at,
                 c.name AS category_name,
-                COALESCE(ai_main.image_url, ai_any.image_url) AS image_url
+                ai.image_url AS image_url
             FROM article a
             LEFT JOIN category_article c ON c.id = a.category_id
-            LEFT JOIN article_image ai_main ON ai_main.article_id = a.id AND ai_main.is_main = 1
-            LEFT JOIN article_image ai_any ON ai_any.article_id = a.id
-            GROUP BY a.id
+            LEFT JOIN article_image ai ON ai.id = (
+                SELECT ai2.id
+                FROM article_image ai2
+                WHERE ai2.article_id = a.id
+                ORDER BY ai2.is_main DESC, ai2.id ASC
+                LIMIT 1
+            )
             ORDER BY a.created_at DESC";
     $stmt = $conn->prepare($sql);
     $stmt->execute();

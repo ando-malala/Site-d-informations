@@ -18,16 +18,21 @@ $search = $_GET['q'] ?? ''; $categoryId = $_GET['category'] ?? '';
 try {
     $categories = $conn->query("SELECT id, name FROM category_article ORDER BY name ASC")->fetch_all(MYSQLI_ASSOC);
     $sql = "SELECT a.id, a.title, a.slug, a.summary, a.created_at, c.name AS category_name,
-            COALESCE(ai_main.image_url, ai_any.image_url) AS image_url, COALESCE(ai_main.alt_text, ai_any.alt_text) AS alt_text
+            ai.image_url AS image_url, ai.alt_text AS alt_text
             FROM article a LEFT JOIN category_article c ON c.id = a.category_id
-            LEFT JOIN article_image ai_main ON ai_main.article_id = a.id AND ai_main.is_main = 1
-            LEFT JOIN article_image ai_any ON ai_any.article_id = a.id
+            LEFT JOIN article_image ai ON ai.id = (
+                SELECT ai2.id
+                FROM article_image ai2
+                WHERE ai2.article_id = a.id
+                ORDER BY ai2.is_main DESC, ai2.id ASC
+                LIMIT 1
+            )
             WHERE a.status = 'publie' "; 
     $params = []; $types = "";
 
     if ($search !== '') { $sql .= " AND (a.title LIKE ? OR a.content LIKE ?) "; $params[] = "%$search%"; $params[] = "%$search%"; $types .= "ss"; }
     if ($categoryId !== '' && is_numeric($categoryId)) { $sql .= " AND a.category_id = ? "; $params[] = $categoryId; $types .= "i"; }
-    $sql .= " GROUP BY a.id ORDER BY a.created_at DESC";
+    $sql .= " ORDER BY a.created_at DESC";
 
     $stmt = $conn->prepare($sql);
     if (!empty($params)) { $stmt->bind_param($types, ...$params); }

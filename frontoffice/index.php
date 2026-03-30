@@ -15,11 +15,16 @@ try {
     $conn = getConnection();
     $categories = $conn->query("SELECT id, name FROM category_article ORDER BY name ASC")->fetch_all(MYSQLI_ASSOC);
     $sql = "SELECT a.id, a.title, a.slug, a.summary, a.created_at, c.name AS category_name,
-            COALESCE(ai_main.image_url, ai_any.image_url) AS image_url, COALESCE(ai_main.alt_text, ai_any.alt_text) AS alt_text
+            ai.image_url AS image_url, ai.alt_text AS alt_text
             FROM article a LEFT JOIN category_article c ON c.id = a.category_id
-            LEFT JOIN article_image ai_main ON ai_main.article_id = a.id AND ai_main.is_main = 1
-            LEFT JOIN article_image ai_any ON ai_any.article_id = a.id
-            WHERE a.status = 'publie' GROUP BY a.id ORDER BY a.created_at DESC LIMIT 10";
+            LEFT JOIN article_image ai ON ai.id = (
+                SELECT ai2.id
+                FROM article_image ai2
+                WHERE ai2.article_id = a.id
+                ORDER BY ai2.is_main DESC, ai2.id ASC
+                LIMIT 1
+            )
+            WHERE a.status = 'publie' ORDER BY a.created_at DESC LIMIT 10";
     $articles = $conn->query($sql)->fetch_all(MYSQLI_ASSOC);
     closeConnection($conn);
 } catch (Throwable $exception) { $error = $exception->getMessage(); }

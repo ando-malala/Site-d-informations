@@ -2,11 +2,14 @@
 
 if (!function_exists('getConnection')) {
     function getConnection() {
-        $host = "127.0.0.1";
-        $port = 3306;
-        $dbname = "site_info";
-        $username = "root";
-        $password = "";
+        $host = getenv('DB_HOST') ?: "127.0.0.1";
+        $port = (int) (getenv('DB_PORT') ?: 3306);
+        $dbname = getenv('DB_NAME') ?: "site_info";
+        $username = getenv('DB_USER') ?: "root";
+        $password = getenv('DB_PASS');
+        if ($password === false) {
+            $password = "";
+        }
 
         mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
