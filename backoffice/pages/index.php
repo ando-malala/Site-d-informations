@@ -17,6 +17,10 @@ function renderHtml($html) {
     return html_entity_decode((string) $html, ENT_QUOTES | ENT_HTML5, 'UTF-8');
 }
 
+function plainText($value) {
+    return trim(strip_tags((string) $value));
+}
+
 $articles = [];
 $error = '';
 
@@ -61,6 +65,8 @@ if (empty($listArticles) && $heroArticle !== null) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Backoffice InfoFlash : gestion et aperçu des derniers articles publiés.">
+    <meta name="keywords" content="backoffice, articles, actualités, CMS">
     <title>InfoFlash | Votre source d'actualités</title>
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -106,11 +112,11 @@ if (empty($listArticles) && $heroArticle !== null) {
             <div class="row align-items-center">
                 <div class="col-lg-8">
                     <?php $heroImage = $heroArticle['image_url'] ?? $defaultHeroImage; ?>
-                    <img src="<?php echo e($heroImage); ?>" class="img-fluid rounded mb-3 mb-lg-0" alt="News">
+                    <img src="<?php echo e($heroImage); ?>" class="img-fluid rounded mb-3 mb-lg-0" alt="<?php echo e(plainText($heroArticle['title'] ?? 'Article principal')); ?>">
                 </div>
                 <div class="col-lg-4">
                     <span class="badge bg-danger mb-2 category-badge">Dernière minute</span>
-                    <h1 class="display-5 fw-bold"><?php echo e($heroArticle['title'] ?? 'Aucun article disponible'); ?></h1>
+                    <h1 class="display-5 fw-bold"><?php echo e(plainText($heroArticle['title'] ?? 'Aucun article disponible')); ?></h1>
                     <div class="lead text-muted html-preview"><?php echo renderHtml($heroArticle['summary'] ?? $heroArticle['content'] ?? 'Ajoutez des articles depuis le backoffice pour les voir ici.'); ?></div>
                     <a href="article" class="btn btn-primary btn-lg">Voir les articles</a>
                 </div>
@@ -142,10 +148,10 @@ if (empty($listArticles) && $heroArticle !== null) {
                         echo '
                         <div class="col-md-6">
                             <div class="card h-100">
-                                <img src="'.e($cardImage).'" class="card-img-top" alt="'.e($article['title']).'">
+                                <img src="'.e($cardImage).'" class="card-img-top" alt="'.e(plainText($article['title'])).'">
                                 <div class="card-body">
                                     <span class="text-primary fw-bold category-badge">'.e($category).'</span>
-                                    <h5 class="card-title mt-2">'.e($article['title']).'</h5>
+                                    <h5 class="card-title mt-2">'.e(plainText($article['title'])).'</h5>
                                     <div class="card-text text-muted html-preview">'.renderHtml($summary).'</div>
                                 </div>
                                 <div class="card-footer bg-white border-0">

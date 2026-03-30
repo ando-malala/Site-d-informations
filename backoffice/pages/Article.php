@@ -12,6 +12,8 @@ $isEdit = $editItem !== null;
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="description" content="CRUD des articles du backoffice InfoFlash.">
+	<meta name="keywords" content="CRUD, article, backoffice, infodash">
 	<title>CRUD Article</title>
 	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
@@ -37,7 +39,7 @@ $isEdit = $editItem !== null;
 </nav>
 
 <div class="container py-4">
-	<h2 class="mb-4">CRUD Article</h2>
+	<h1 class="mb-4">CRUD Article</h1>
 
 	<?php if (!empty($message)): ?>
 		<div class="alert alert-success"><?php echo e($message); ?></div>
