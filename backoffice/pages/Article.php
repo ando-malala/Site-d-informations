@@ -56,8 +56,14 @@ $isEdit = $editItem !== null;
 				<div class="row g-3">
 					<div class="col-md-6"><input class="form-control" name="title" placeholder="Title" required value="<?php echo e($editItem['title'] ?? ''); ?>"></div>
 					<div class="col-md-6"><input class="form-control" name="slug" placeholder="Slug" required value="<?php echo e($editItem['slug'] ?? ''); ?>"></div>
-					<div class="col-md-12"><textarea class="form-control" id="summary-editor" name="summary" placeholder="Summary" rows="2"><?php echo e($editItem['summary'] ?? ''); ?></textarea></div>
-					<div class="col-md-12"><textarea class="form-control" name="content" placeholder="Content" rows="5" required><?php echo e($editItem['content'] ?? ''); ?></textarea></div>
+					<div class="col-md-12">
+						<label for="summary-editor" class="form-label fw-semibold">Summary</label>
+						<textarea class="form-control" id="summary-editor" name="summary" placeholder="Summary" rows="2"><?php echo e($editItem['summary'] ?? ''); ?></textarea>
+					</div>
+					<div class="col-md-12">
+						<label for="content-editor" class="form-label fw-semibold">Content</label>
+						<textarea class="form-control" id="content-editor" name="content" placeholder="Content" rows="5" required><?php echo e($editItem['content'] ?? ''); ?></textarea>
+					</div>
 					<div class="col-md-3">
 						<select class="form-select" name="status" required>
 							<?php $statusValue = $editItem['status'] ?? 'brouillon'; ?>
@@ -113,7 +119,7 @@ $isEdit = $editItem !== null;
 <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.3/tinymce.min.js" referrerpolicy="origin"></script>
 <script>
 	tinymce.init({
-		selector: '#summary-editor',
+		selector: '#summary-editor, #content-editor',
 		height: 220,
 		menubar: false,
 		plugins: 'lists link code',
