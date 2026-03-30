@@ -1,0 +1,4 @@
+RewriteEngine On
+
+# Transforme /article/mon-slug-iran en /article.php?slug=mon-slug-iran
+RewriteRule ^article/([a-zA-Z0-9\-]+)$ article.php?slug=$1 [L]
