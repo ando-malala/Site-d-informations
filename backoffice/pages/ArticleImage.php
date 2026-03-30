@@ -18,20 +18,20 @@ $isEdit = $editItem !== null;
 <body class="bg-light">
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
 	<div class="container">
-		<a class="navbar-brand" href="index.php">INFOFLASH</a>
+		<a class="navbar-brand" href="index">INFOFLASH</a>
 		<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
 			<span class="navbar-toggler-icon"></span>
 		</button>
 		<div class="collapse navbar-collapse" id="navbarNav">
 			<ul class="navbar-nav me-auto">
-				<li class="nav-item"><a class="nav-link" href="index.php">Accueil</a></li>
-				<li class="nav-item"><a class="nav-link" href="Article.php">Article</a></li>
-				<li class="nav-item"><a class="nav-link active" href="ArticleImage.php">Article Image</a></li>
-				<li class="nav-item"><a class="nav-link" href="CategoryArticle.php">CategoryArticle</a></li>
-				<li class="nav-item"><a class="nav-link" href="Source.php">Source</a></li>
-				<li class="nav-item"><a class="nav-link" href="TypeSource.php">TypeSource</a></li>
+				<li class="nav-item"><a class="nav-link" href="index">Accueil</a></li>
+				<li class="nav-item"><a class="nav-link" href="article">Article</a></li>
+				<li class="nav-item"><a class="nav-link active" href="article-image">Article Image</a></li>
+				<li class="nav-item"><a class="nav-link" href="category-article">CategoryArticle</a></li>
+				<li class="nav-item"><a class="nav-link" href="source">Source</a></li>
+				<li class="nav-item"><a class="nav-link" href="type-source">TypeSource</a></li>
 			</ul>
-			<a href="../../frontoffice/index.php" class="btn btn-outline-light">Frontend</a>
+			<a href="../../frontoffice/" class="btn btn-outline-light">Frontend</a>
 		</div>
 	</div>
 </nav>
@@ -59,7 +59,7 @@ $isEdit = $editItem !== null;
 				</div>
 				<div class="mt-3 d-flex gap-2">
 					<button class="btn btn-primary" type="submit"><?php echo $isEdit ? 'Mettre à jour' : 'Créer'; ?></button>
-					<?php if ($isEdit): ?><a class="btn btn-secondary" href="ArticleImage.php">Annuler</a><?php endif; ?>
+					<?php if ($isEdit): ?><a class="btn btn-secondary" href="article-image">Annuler</a><?php endif; ?>
 				</div>
 			</form>
 		</div>

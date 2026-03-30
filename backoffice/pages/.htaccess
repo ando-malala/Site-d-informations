@@ -1,0 +1,9 @@
+RewriteEngine On
+
+RewriteRule ^$ index.php [L,QSA]
+RewriteRule ^index/?$ index.php [L,QSA,NC]
+RewriteRule ^article/?$ Article.php [L,QSA,NC]
+RewriteRule ^article-image/?$ ArticleImage.php [L,QSA,NC]
+RewriteRule ^category-article/?$ CategoryArticle.php [L,QSA,NC]
+RewriteRule ^source/?$ Source.php [L,QSA,NC]
+RewriteRule ^type-source/?$ TypeSource.php [L,QSA,NC]
