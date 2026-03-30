@@ -2,28 +2,31 @@
 
     include '../connect/Connect.php';
 
-    function createArticle($title, $content,$source_id, $category_id, $created_at) {
+    function createArticle($title, $slug, $content, $summary = null, $status = 'brouillon', $source_id = null, $category_id = null, $user_id = null) {
         $conn = getConnection();
-        $stmt = $conn->prepare("INSERT INTO article (title, content,source_id, category_id, created_at) VALUES (?, ?, ?, ?, ?)");
-        $stmt->bind_param("ssii", $title, $content, $source_id, $category_id, $created_at);
-        $stmt->execute();
+        $stmt = $conn->prepare("INSERT INTO article (title, slug, summary, content, status, source_id, category_id, user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt->bind_param("sssssiii", $title, $slug, $summary, $content, $status, $source_id, $category_id, $user_id);
+        $isCreated = $stmt->execute();
         closeConnection($conn);
+        return $isCreated;
     }
 
-    function updateArticle($id, $title, $content, $source_id, $category_id, $created_at) {
+    function updateArticle($id, $title, $slug, $content, $summary = null, $status = 'brouillon', $source_id = null, $category_id = null, $user_id = null) {
         $conn = getConnection();
-        $stmt = $conn->prepare("UPDATE article SET title = ?, content = ?, source_id = ?, category_id = ?, created_at = ? WHERE id = ?");
-        $stmt->bind_param("ssiii", $title, $content, $source_id, $category_id, $created_at, $id);
-        $stmt->execute();
+        $stmt = $conn->prepare("UPDATE article SET title = ?, slug = ?, summary = ?, content = ?, status = ?, source_id = ?, category_id = ?, user_id = ? WHERE id = ?");
+        $stmt->bind_param("sssssiiii", $title, $slug, $summary, $content, $status, $source_id, $category_id, $user_id, $id);
+        $isUpdated = $stmt->execute();
         closeConnection($conn);
+        return $isUpdated;
     }
 
     function deleteArticle($id) {
         $conn = getConnection();
         $stmt = $conn->prepare("DELETE FROM article WHERE id = ?");
         $stmt->bind_param("i", $id);
-        $stmt->execute();
+        $isDeleted = $stmt->execute();
         closeConnection($conn);
+        return $isDeleted;
     }
 
 

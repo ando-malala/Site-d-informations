@@ -1,5 +1,5 @@
 <?php
 
-    header('Location: frontend/index.php');
+    header('Location: frontoffice/index.php');
     exit();
 ?>

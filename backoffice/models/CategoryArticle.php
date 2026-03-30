@@ -2,28 +2,43 @@
 
     include '../connect/Connect.php';
 
-    function createTypeSource($name) {
+    function createCategoryArticle($name, $slug = null) {
         $conn = getConnection();
-        $stmt = $conn->prepare("INSERT INTO category_article (name) VALUES (?)");
-        $stmt->bind_param("s", $name);
-        $stmt->execute();
+        $stmt = $conn->prepare("INSERT INTO category_article (name, slug) VALUES (?, ?)");
+        $stmt->bind_param("ss", $name, $slug);
+        $isCreated = $stmt->execute();
         closeConnection($conn);
+        return $isCreated;
     }
 
-    function updateTypeSource($id, $name) {
+    function updateCategoryArticle($id, $name, $slug = null) {
         $conn = getConnection();
-        $stmt = $conn->prepare("UPDATE category_article SET name = ? WHERE id = ?");
-        $stmt->bind_param("si", $name, $id);
-        $stmt->execute();
+        $stmt = $conn->prepare("UPDATE category_article SET name = ?, slug = ? WHERE id = ?");
+        $stmt->bind_param("ssi", $name, $slug, $id);
+        $isUpdated = $stmt->execute();
         closeConnection($conn);
+        return $isUpdated;
     }
 
-    function deleteTypeSource($id) {
+    function deleteCategoryArticle($id) {
         $conn = getConnection();
         $stmt = $conn->prepare("DELETE FROM category_article WHERE id = ?");
         $stmt->bind_param("i", $id);
-        $stmt->execute();
+        $isDeleted = $stmt->execute();
         closeConnection($conn);
+        return $isDeleted;
+    }
+
+    function createTypeSource($name) {
+        return createCategoryArticle($name);
+    }
+
+    function updateTypeSource($id, $name) {
+        return updateCategoryArticle($id, $name);
+    }
+
+    function deleteTypeSource($id) {
+        return deleteCategoryArticle($id);
     }
 
 
