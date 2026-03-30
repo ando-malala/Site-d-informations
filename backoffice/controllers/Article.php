@@ -26,6 +26,14 @@ function redirectWithStatus($key, $value) {
 	exit;
 }
 
+function wrapTitleWithH1($title) {
+	$cleanTitle = trim(strip_tags((string) $title));
+	if ($cleanTitle === '') {
+		return '';
+	}
+	return '<h1>' . $cleanTitle . '</h1>';
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 	$action = $_POST['action'] ?? '';
 
@@ -42,7 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 		if ($action === 'create') {
 			createArticle(
-				$title,
+				wrapTitleWithH1($title),
 				$slug,
 				$contentHtml,
 				$summaryHtml,
