@@ -6,7 +6,7 @@ if (!function_exists('getConnection')) {
         $port = 3306;
         $dbname = "site_info";
         $username = "root";
-        $password = "karen";
+        $password = "";
 
         mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
