@@ -14,37 +14,57 @@ $isEdit = $editItem !== null;
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<meta name="description" content="CRUD des images d'articles du backoffice InfoFlash.">
 	<meta name="keywords" content="CRUD, article image, backoffice">
-	<title>CRUD ArticleImage</title>
+	<title>Backoffice Images | InfoFlash</title>
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700;900&family=Open+Sans:wght@400;600&display=swap">
+	<style>
+		body { font-family: 'Open Sans', sans-serif; background-color: #fcfcfc; color: #111; }
+		h1, h2, h3, h4, h5, .logo-text { font-family: 'Merriweather', serif; font-weight: 700; color: #000; }
+		.logo-text { font-size: 3.5rem; letter-spacing: -2px; }
+		.journal-header { border-top: 1px solid #ccc; border-bottom: 3px solid #000; background: #fff; }
+		.nav-link { color: #333; font-weight: 600; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 0.5px; }
+		.nav-link:hover, .nav-link.active { color: #b71c1c; }
+		.section-title { border-bottom: 2px solid #111; padding-bottom: 10px; margin-bottom: 25px; text-transform: uppercase; letter-spacing: 1px; }
+		.panel { border: 0; box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
+		.panel .card-header { background: #fff; border-bottom: 2px solid #111; font-weight: 700; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 0.8px; }
+		.table thead th { text-transform: uppercase; font-size: 0.78rem; letter-spacing: 0.6px; }
+		.form-control, .form-select { border-radius: 0; }
+		.btn { border-radius: 0; }
+	</style>
 </head>
-<body class="bg-light">
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
+<body>
+<header class="bg-white pt-4 pb-3">
+	<div class="container text-center"><a href="index" class="text-decoration-none"><h1 class="logo-text mb-0">INFOFLASH</h1></a></div>
+</header>
+
+<nav class="navbar navbar-expand-lg navbar-light journal-header mb-4 sticky-top shadow-sm">
 	<div class="container">
-		<a class="navbar-brand" href="index">INFOFLASH</a>
-		<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+		<button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-label="Menu backoffice">
 			<span class="navbar-toggler-icon"></span>
 		</button>
-		<div class="collapse navbar-collapse" id="navbarNav">
-			<ul class="navbar-nav me-auto">
-				<li class="nav-item"><a class="nav-link" href="index">Accueil</a></li>
-				<li class="nav-item"><a class="nav-link" href="article">Article</a></li>
-				<li class="nav-item"><a class="nav-link active" href="article-image">Article Image</a></li>
-				<li class="nav-item"><a class="nav-link" href="category-article">CategoryArticle</a></li>
-				<li class="nav-item"><a class="nav-link" href="source">Source</a></li>
-				<li class="nav-item"><a class="nav-link" href="type-source">TypeSource</a></li>
+		<div class="collapse navbar-collapse justify-content-center" id="navbarNav">
+			<ul class="navbar-nav gap-3">
+				<li class="nav-item"><a class="nav-link" href="index">Actualités</a></li>
+				<li class="nav-item"><a class="nav-link" href="article">Articles</a></li>
+				<li class="nav-item"><a class="nav-link active" href="article-image">Images</a></li>
+				<li class="nav-item"><a class="nav-link" href="category-article">Catégories</a></li>
+				<li class="nav-item"><a class="nav-link" href="source">Sources</a></li>
+				<li class="nav-item"><a class="nav-link" href="type-source">Types</a></li>
+				<li class="nav-item ms-lg-3"><a href="../../frontoffice/" class="btn btn-sm btn-dark fw-bold px-3">Frontoffice</a></li>
 			</ul>
-			<a href="../../frontoffice/" class="btn btn-outline-light">Frontend</a>
 		</div>
 	</div>
 </nav>
 
-<div class="container py-4">
-	<h1 class="mb-4">CRUD ArticleImage</h1>
+<main class="container pb-5">
+	<h2 class="section-title h4">Gestion des images d'articles</h2>
 
-	<?php if (!empty($message)): ?><div class="alert alert-success"><?php echo e($message); ?></div><?php endif; ?>
-	<?php if (!empty($error)): ?><div class="alert alert-danger"><?php echo e($error); ?></div><?php endif; ?>
+	<?php if (!empty($message)): ?><div class="alert alert-success rounded-0"><?php echo e($message); ?></div><?php endif; ?>
+	<?php if (!empty($error)): ?><div class="alert alert-danger rounded-0"><?php echo e($error); ?></div><?php endif; ?>
 
-	<div class="card mb-4">
+	<div class="card panel mb-4">
 		<div class="card-header"><?php echo $isEdit ? 'Modifier' : 'Créer'; ?> une image</div>
 		<div class="card-body">
 			<form method="post">
@@ -61,16 +81,16 @@ $isEdit = $editItem !== null;
 				</div>
 				<div class="mt-3 d-flex gap-2">
 					<button class="btn btn-primary" type="submit"><?php echo $isEdit ? 'Mettre à jour' : 'Créer'; ?></button>
-					<?php if ($isEdit): ?><a class="btn btn-secondary" href="article-image">Annuler</a><?php endif; ?>
+					<?php if ($isEdit): ?><a class="btn btn-outline-secondary" href="article-image">Annuler</a><?php endif; ?>
 				</div>
 			</form>
 		</div>
 	</div>
 
-	<div class="card">
+	<div class="card panel">
 		<div class="card-header">Liste des images</div>
 		<div class="table-responsive">
-			<table class="table table-striped table-hover mb-0">
+			<table class="table table-hover align-middle mb-0">
 				<thead><tr><th>ID</th><th>Article ID</th><th>URL</th><th>Alt</th><th>Main</th><th>Actions</th></tr></thead>
 				<tbody>
 				<?php foreach ($items as $item): ?>
@@ -81,7 +101,7 @@ $isEdit = $editItem !== null;
 						<td><?php echo e($item['alt_text']); ?></td>
 						<td><?php echo !empty($item['is_main']) ? 'Oui' : 'Non'; ?></td>
 						<td class="d-flex gap-2">
-							<a class="btn btn-sm btn-warning" href="?edit=<?php echo e($item['id']); ?>">Modifier</a>
+							<a class="btn btn-sm btn-outline-dark" href="?edit=<?php echo e($item['id']); ?>">Modifier</a>
 							<form method="post" onsubmit="return confirm('Supprimer cette image ?');">
 								<input type="hidden" name="action" value="delete">
 								<input type="hidden" name="id" value="<?php echo e($item['id']); ?>">
@@ -94,7 +114,9 @@ $isEdit = $editItem !== null;
 			</table>
 		</div>
 	</div>
-</div>
+</main>
+
+<footer class="bg-dark text-white py-4 mt-5"><div class="container text-center"><p class="mb-0 small text-secondary">&copy; <?php echo date("Y"); ?> Backoffice InfoFlash.</p></div></footer>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
