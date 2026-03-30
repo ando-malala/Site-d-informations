@@ -1,186 +1,155 @@
 <?php
+
+session_start();
+
+if (isset($_SERVER['HTTP_ACCEPT_ENCODING']) && substr_count($_SERVER['HTTP_ACCEPT_ENCODING'], 'gzip')) { ob_start("ob_gzhandler"); } else { ob_start(); }
 include_once '../../backoffice/connect/Connect.php';
 
-function e($value) {
-    return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
-}
-
+function e($value) { return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8'); }
 function excerptText($html, $maxLength = 150) {
     $text = trim(strip_tags((string) $html));
     if (mb_strlen($text) <= $maxLength) return $text;
     return mb_substr($text, 0, $maxLength) . '...';
 }
 
-$conn = getConnection();
-$error = '';
-$articles = [];
-$categories = [];
-
-// Paramètres de filtrage
-$search = $_GET['q'] ?? '';
-$categoryId = $_GET['category'] ?? '';
+$conn = getConnection(); $error = ''; $articles = []; $categories = [];
+$search = $_GET['q'] ?? ''; $categoryId = $_GET['category'] ?? '';
 
 try {
-    // 1. Récupérer toutes les catégories pour le menu déroulant du filtre
-    $catResult = $conn->query("SELECT id, name FROM category_article ORDER BY name ASC");
-    if ($catResult) {
-        $categories = $catResult->fetch_all(MYSQLI_ASSOC);
-    }
-
-    // 2. Construire la requête principale avec des filtres dynamiques
-    $sql = "SELECT 
-                a.id, a.title, a.slug, a.summary, a.created_at, 
-                c.name AS category_name,
-                COALESCE(ai_main.image_url, ai_any.image_url) AS image_url
-            FROM article a
-            LEFT JOIN category_article c ON c.id = a.category_id
+    $categories = $conn->query("SELECT id, name FROM category_article ORDER BY name ASC")->fetch_all(MYSQLI_ASSOC);
+    $sql = "SELECT a.id, a.title, a.slug, a.summary, a.created_at, c.name AS category_name,
+            COALESCE(ai_main.image_url, ai_any.image_url) AS image_url, COALESCE(ai_main.alt_text, ai_any.alt_text) AS alt_text
+            FROM article a LEFT JOIN category_article c ON c.id = a.category_id
             LEFT JOIN article_image ai_main ON ai_main.article_id = a.id AND ai_main.is_main = 1
             LEFT JOIN article_image ai_any ON ai_any.article_id = a.id
-            WHERE a.status = 'publie' "; // On ne montre que les articles publiés en front
+            WHERE a.status = 'publie' "; 
+    $params = []; $types = "";
 
-    $params = [];
-    $types = "";
-
-    // Application du filtre de recherche (titre ou contenu)
-    if ($search !== '') {
-        $sql .= " AND (a.title LIKE ? OR a.content LIKE ?) ";
-        $searchParam = "%" . $search . "%";
-        $params[] = $searchParam;
-        $params[] = $searchParam;
-        $types .= "ss";
-    }
-
-    // Application du filtre de catégorie
-    if ($categoryId !== '' && is_numeric($categoryId)) {
-        $sql .= " AND a.category_id = ? ";
-        $params[] = $categoryId;
-        $types .= "i";
-    }
-
+    if ($search !== '') { $sql .= " AND (a.title LIKE ? OR a.content LIKE ?) "; $params[] = "%$search%"; $params[] = "%$search%"; $types .= "ss"; }
+    if ($categoryId !== '' && is_numeric($categoryId)) { $sql .= " AND a.category_id = ? "; $params[] = $categoryId; $types .= "i"; }
     $sql .= " GROUP BY a.id ORDER BY a.created_at DESC";
 
     $stmt = $conn->prepare($sql);
-    
-    // Bind dynamique des paramètres s'il y en a
-    if (!empty($params)) {
-        $stmt->bind_param($types, ...$params);
-    }
-
+    if (!empty($params)) { $stmt->bind_param($types, ...$params); }
     $stmt->execute();
     $articles = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    closeConnection($conn);
+} catch (Throwable $exception) { $error = $exception->getMessage(); }
 
-} catch (Throwable $exception) {
-    $error = $exception->getMessage();
-} finally {
-    if (isset($conn)) closeConnection($conn);
-}
-
-$defaultCardImage = 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&w=400&q=80';
+$defaultCardImage = 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&w=400&q=60&fm=webp';
 ?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tous les articles | InfoFlash</title>
+    <title>Archives et Articles | InfoFlash</title>
+    <meta name="description" content="Parcourez les archives et les dernières actualités sur InfoFlash. Filtrez par catégories et sujets spécifiques.">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700;900&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700;900&family=Open+Sans:wght@400;600&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700;900&family=Open+Sans:wght@400;600&display=swap" media="print" onload="this.media='all'">
+    
     <style>
         body { font-family: 'Open Sans', sans-serif; background-color: #fcfcfc; color: #333; }
-        h1, h2, h3, h4, h5, .navbar-brand { font-family: 'Merriweather', serif; font-weight: 700; color: #111; }
-        .journal-header { border-top: 2px solid #111; border-bottom: 2px solid #111; background: #fff; }
-        .card { border: 1px solid #ebebeb; border-radius: 0; box-shadow: none; transition: background 0.2s; }
-        .card:hover { background: #f8f9fa; }
-        .category-badge { font-family: 'Open Sans', sans-serif; font-size: 0.75rem; letter-spacing: 1px; color: #b71c1c; font-weight: 600; text-transform: uppercase; }
-        .filter-sidebar { background: #fff; border: 1px solid #ebebeb; padding: 20px; position: sticky; top: 80px; }
+        h1, h2, h3, h4, h5 { font-family: 'Merriweather', serif; font-weight: 700; color: #111; }
+        .logo-text { font-family: 'Merriweather', serif; font-size: 3.5rem; letter-spacing: -2px; font-weight: 900; color: #000; }
+        .journal-header { border-top: 1px solid #ccc; border-bottom: 3px solid #000; background: #fff; }
+        .nav-link { color: #333; font-weight: 600; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 0.5px; }
+        
+        .filter-sidebar { background: #f8f9fa; padding: 25px; border-top: 4px solid #111; position: sticky; top: 100px; }
+        .category-badge { color: #b71c1c; font-size: 0.75rem; text-transform: uppercase; font-weight: 700; letter-spacing: 1px; }
+        
+        /* Design flat des cartes sans bordures moches */
+        .article-card { transition: transform 0.2s; border-bottom: 1px solid #eee; padding-bottom: 20px; height: 100%; display: flex; flex-direction: column; }
+        .img-zoom-wrap { overflow: hidden; display: block; }
+        .img-zoom-wrap img { transition: transform 0.5s ease; }
+        .img-zoom-wrap:hover img { transform: scale(1.04); }
+        .title-hover a { background-image: linear-gradient(transparent calc(100% - 2px), #b71c1c 2px); background-repeat: no-repeat; background-size: 0 100%; transition: background-size 0.3s ease; display: inline; }
+        .title-hover a:hover { background-size: 100% 100%; color: #000 !important; }
     </style>
 </head>
 <body>
 
-    <header class="bg-white py-3">
-        <div class="container text-center">
-            <h1 class="display-4 fw-bold mb-0">INFOFLASH</h1>
-            <p class="text-muted small text-uppercase tracking-widest mb-0"><?php echo date('l j F Y'); ?></p>
-        </div>
+    <header class="bg-white pt-4 pb-3">
+        <div class="container text-center"><a href="../index.php" class="text-decoration-none"><h1 class="logo-text mb-0">INFOFLASH</h1></a></div>
     </header>
 
-    <nav class="navbar navbar-expand-lg navbar-light journal-header sticky-top">
+    <nav class="navbar navbar-expand-lg navbar-light journal-header sticky-top shadow-sm mb-5">
         <div class="container">
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-label="Menu">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse justify-content-center" id="navbarNav">
-                <ul class="navbar-nav">
-                    <li class="nav-item"><a class="nav-link fw-bold px-4" href="../index.php">À LA UNE</a></li>
-                    <li class="nav-item"><a class="nav-link active fw-bold px-4" href="article.php">TOUS LES ARTICLES</a></li>
+                <ul class="navbar-nav gap-3">
+                    <li class="nav-item"><a class="nav-link" href="../index.php">ACTUALITÉS</a></li>
+                    <li class="nav-item"><a class="nav-link active fw-bold text-danger" href="Article.php">ARCHIVES</a></li>
+                    <?php if (isset($_SESSION['user_id'])): ?>
+                        <li class="nav-item ms-lg-3 d-flex gap-2 align-items-center">
+                            <a href="../../backoffice/logout.php" class="btn btn-sm btn-danger rounded-0" title="Se déconnecter"><i class="fa-solid fa-power-off"></i></a>
+                        </li>
+                    <?php else: ?>
+                        <li class="nav-item ms-lg-3">
+                            <a href="../../backoffice/login.php" class="btn btn-sm btn-dark rounded-0 fw-bold px-3">Connexion</a>
+                        </li>
+                    <?php endif; ?>
                 </ul>
             </div>
         </div>
     </nav>
 
-    <main class="container py-5">
+    <main class="container">
         <div class="row">
-            <aside class="col-lg-3 mb-4">
-                <div class="filter-sidebar">
-                    <h4 class="h5 mb-3 border-bottom pb-2">Filtrer les résultats</h4>
-                    <form method="GET" action="article.php">
+            <aside class="col-lg-3 mb-4 pe-lg-4">
+                <div class="filter-sidebar shadow-sm">
+                    <h2 class="h6 text-uppercase fw-bold mb-4 tracking-widest">Recherche</h2>
+                    <form method="GET" action="Article.php">
                         <div class="mb-3">
-                            <label class="form-label small fw-bold">Recherche par mot-clé</label>
-                            <div class="input-group">
-                                <input type="text" name="q" class="form-control rounded-0" placeholder="Ex: politique, climat..." value="<?php echo e($search); ?>">
-                            </div>
+                            <input type="text" aria-label="Mots-clés" name="q" class="form-control rounded-0 bg-white" placeholder="Mots-clés..." value="<?php echo e($search); ?>">
                         </div>
                         <div class="mb-4">
-                            <label class="form-label small fw-bold">Catégorie</label>
-                            <select name="category" class="form-select rounded-0">
+                            <select aria-label="Catégorie" name="category" class="form-select rounded-0 bg-white">
                                 <option value="">Toutes les catégories</option>
                                 <?php foreach ($categories as $cat): ?>
-                                    <option value="<?php echo $cat['id']; ?>" <?php echo ($categoryId == $cat['id']) ? 'selected' : ''; ?>>
-                                        <?php echo e($cat['name']); ?>
-                                    </option>
+                                    <option value="<?php echo $cat['id']; ?>" <?php echo ($categoryId == $cat['id']) ? 'selected' : ''; ?>><?php echo e($cat['name']); ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
-                        <button type="submit" class="btn btn-dark w-100 rounded-0 fw-bold">Appliquer les filtres</button>
-                        <?php if ($search || $categoryId): ?>
-                            <a href="article.php" class="btn btn-outline-secondary w-100 rounded-0 mt-2 small">Réinitialiser</a>
-                        <?php endif; ?>
+                        <button type="submit" class="btn btn-dark w-100 rounded-0 fw-bold text-uppercase" style="letter-spacing:1px; font-size:0.85rem;">Appliquer</button>
+                        <?php if ($search || $categoryId): ?><a href="Article.php" class="btn btn-link text-muted text-decoration-none w-100 mt-2 small">Réinitialiser</a><?php endif; ?>
                     </form>
                 </div>
             </aside>
 
-            <div class="col-lg-9">
-                <h2 class="border-bottom border-dark pb-2 mb-4">Archives & Actualités</h2>
+            <div class="col-lg-9 border-start ps-lg-4">
+                <div class="d-flex align-items-center mb-4 pb-2 border-bottom border-dark border-2">
+                    <h2 class="h4 mb-0 fw-bold text-uppercase">Tous nos articles</h2>
+                </div>
 
-                <?php if (!empty($error)): ?>
-                    <div class="alert alert-danger rounded-0"><?php echo e($error); ?></div>
-                <?php endif; ?>
+                <?php if (!empty($error)): ?><div class="alert alert-danger rounded-0"><?php echo e($error); ?></div><?php endif; ?>
 
                 <?php if (empty($articles)): ?>
-                    <div class="alert alert-light border rounded-0 text-center py-5">
-                        <i class="fa-regular fa-folder-open fa-3x text-muted mb-3"></i>
-                        <p class="lead mb-0">Aucun article ne correspond à votre recherche.</p>
-                    </div>
+                    <div class="alert bg-light border-0 rounded-0 text-center py-5"><p class="lead text-muted mb-0">Aucun résultat trouvé.</p></div>
                 <?php else: ?>
                     <div class="row g-4">
                         <?php foreach ($articles as $article): 
                             $cardImage = !empty($article['image_url']) ? $article['image_url'] : $defaultCardImage;
-                            $category = !empty($article['category_name']) ? $article['category_name'] : 'Édition';
-                            $date = !empty($article['created_at']) ? date('d/m/Y', strtotime($article['created_at'])) : '';
+                            $altText = !empty($article['alt_text']) ? $article['alt_text'] : strip_tags($article['title']);
                         ?>
-                            <div class="col-md-4">
-                                <article class="card h-100">
-                                    <img src="<?php echo e($cardImage); ?>" loading="lazy" class="card-img-top rounded-0" style="height:180px; object-fit:cover;" alt="Image d'illustration">
-                                    <div class="card-body">
-                                        <div class="category-badge mb-2"><?php echo e($category); ?></div>
-                                        <h3 class="h5 card-title"><a href="../lire.php?slug=<?php echo e($article['slug']); ?>" class="text-dark text-decoration-none stretched-link"><?php echo e($article['title']); ?></a></h3>
-                                        <p class="card-text text-muted small mt-2"><?php echo e(excerptText($article['summary'] ?? '', 100)); ?></p>
-                                    </div>
-                                    <div class="card-footer bg-transparent border-0 pt-0">
-                                        <small class="text-muted fst-italic">Publié le <?php echo e($date); ?></small>
-                                    </div>
-                                </article>
+                            <div class="col-md-6 mb-3">
+                                <div class="article-card">
+                                    <a href="../lire.php?slug=<?php echo e($article['slug']); ?>" class="img-zoom-wrap mb-3" aria-label="<?php echo e(strip_tags($article['title'])); ?>">
+                                        <img src="<?php echo e($cardImage); ?>" loading="lazy" width="400" height="225" class="w-100 shadow-sm" style="height:225px; object-fit:cover;" alt="<?php echo e($altText); ?>">
+                                    </a>
+                                    <div class="category-badge mb-2"><?php echo e($article['category_name'] ?? 'Édition'); ?></div>
+                                    <h3 class="h4 title-hover lh-base mb-2">
+                                        <a href="../lire.php?slug=<?php echo e($article['slug']); ?>" class="text-dark text-decoration-none"><?php echo e(strip_tags($article['title'])); ?></a>
+                                    </h3>
+                                    <p class="text-muted small lh-lg flex-grow-1"><?php echo e(excerptText($article['summary'] ?? '', 120)); ?></p>
+                                    <small class="text-muted fst-italic mt-2">Le <?php echo date('d/m/Y', strtotime($article['created_at'])); ?></small>
+                                </div>
                             </div>
                         <?php endforeach; ?>
                     </div>
@@ -189,11 +158,7 @@ $defaultCardImage = 'https://images.unsplash.com/photo-1485827404703-89b55fcc595
         </div>
     </main>
 
-    <footer class="bg-dark text-white py-4 mt-5">
-        <div class="container text-center">
-            <p class="mb-0 small">&copy; <?php echo date("Y"); ?> InfoFlash - Site de démonstration éditoriale.</p>
-        </div>
-    </footer>
-
+    <footer class="bg-dark text-white py-4 mt-5"><div class="container text-center"><p class="mb-0 small text-secondary">&copy; <?php echo date("Y"); ?> InfoFlash.</p></div></footer>
+    <?php ob_end_flush(); ?>
 </body>
 </html>
