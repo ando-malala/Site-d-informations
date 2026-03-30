@@ -49,7 +49,7 @@ $isEdit = $editItem !== null;
 	<div class="card mb-4">
 		<div class="card-header"><?php echo $isEdit ? 'Modifier' : 'Créer'; ?> un article</div>
 		<div class="card-body">
-			<form method="post">
+			<form method="post" id="article-form">
 				<input type="hidden" name="action" value="<?php echo $isEdit ? 'update' : 'create'; ?>">
 				<?php if ($isEdit): ?><input type="hidden" name="id" value="<?php echo e($editItem['id']); ?>"><?php endif; ?>
 
@@ -62,7 +62,7 @@ $isEdit = $editItem !== null;
 					</div>
 					<div class="col-md-12">
 						<label for="content-editor" class="form-label fw-semibold">Content</label>
-						<textarea class="form-control" id="content-editor" name="content" placeholder="Content" rows="5" required><?php echo e($editItem['content'] ?? ''); ?></textarea>
+						<textarea class="form-control" id="content-editor" name="content" placeholder="Content" rows="5"><?php echo e($editItem['content'] ?? ''); ?></textarea>
 					</div>
 					<div class="col-md-3">
 						<select class="form-select" name="status" required>
@@ -123,8 +123,26 @@ $isEdit = $editItem !== null;
 		height: 220,
 		menubar: false,
 		plugins: 'lists link code',
-		toolbar: 'undo redo | bold italic underline | bullist numlist | link | code',
+		toolbar: 'undo redo | blocks | bold italic underline | bullist numlist | link | code',
+		block_formats: 'Paragraph=p; Header 1=h1; Header 2=h2; Header 3=h3; Header 4=h4; Header 5=h5; Header 6=h6',
 		branding: false
+	});
+
+	document.getElementById('article-form').addEventListener('submit', function (event) {
+		tinymce.triggerSave();
+
+		const editor = tinymce.get('content-editor');
+		const contentText = editor
+			? editor.getContent({ format: 'text' }).trim()
+			: (document.getElementById('content-editor').value || '').trim();
+
+		if (!contentText) {
+			event.preventDefault();
+			alert('Le champ Content est obligatoire.');
+			if (editor) {
+				editor.focus();
+			}
+		}
 	});
 </script>
 </body>

@@ -13,6 +13,10 @@ function excerptText($html, $maxLength = 180) {
     return mb_substr($text, 0, $maxLength) . '...';
 }
 
+function renderHtml($html) {
+    return html_entity_decode((string) $html, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+}
+
 $articles = [];
 $error = '';
 
@@ -70,6 +74,7 @@ if (empty($listArticles) && $heroArticle !== null) {
         .card:hover { transform: translateY(-5px); }
         .category-badge { font-size: 0.8rem; text-transform: uppercase; font-weight: bold; }
         .footer { background: #212529; color: white; padding: 50px 0; margin-top: 50px; }
+        .html-preview { max-height: 90px; overflow: hidden; }
     </style>
 </head>
 <body>
@@ -106,7 +111,7 @@ if (empty($listArticles) && $heroArticle !== null) {
                 <div class="col-lg-4">
                     <span class="badge bg-danger mb-2 category-badge">Dernière minute</span>
                     <h1 class="display-5 fw-bold"><?php echo e($heroArticle['title'] ?? 'Aucun article disponible'); ?></h1>
-                    <p class="lead text-muted"><?php echo e(excerptText($heroArticle['summary'] ?? $heroArticle['content'] ?? 'Ajoutez des articles depuis le backoffice pour les voir ici.', 220)); ?></p>
+                    <div class="lead text-muted html-preview"><?php echo renderHtml($heroArticle['summary'] ?? $heroArticle['content'] ?? 'Ajoutez des articles depuis le backoffice pour les voir ici.'); ?></div>
                     <a href="Article.php" class="btn btn-primary btn-lg">Voir les articles</a>
                 </div>
             </div>
@@ -132,7 +137,7 @@ if (empty($listArticles) && $heroArticle !== null) {
                         $cardImage = !empty($article['image_url']) ? $article['image_url'] : $defaultCardImage;
                         $category = !empty($article['category_name']) ? $article['category_name'] : 'Non classé';
                         $date = !empty($article['created_at']) ? date('d/m/Y H:i', strtotime($article['created_at'])) : '-';
-                        $summary = excerptText($article['summary'] ?? $article['content'] ?? '', 140);
+                        $summary = $article['summary'] ?? $article['content'] ?? '';
 
                         echo '
                         <div class="col-md-6">
@@ -141,7 +146,7 @@ if (empty($listArticles) && $heroArticle !== null) {
                                 <div class="card-body">
                                     <span class="text-primary fw-bold category-badge">'.e($category).'</span>
                                     <h5 class="card-title mt-2">'.e($article['title']).'</h5>
-                                    <p class="card-text text-muted">'.e($summary).'</p>
+                                    <div class="card-text text-muted html-preview">'.renderHtml($summary).'</div>
                                 </div>
                                 <div class="card-footer bg-white border-0">
                                     <small class="text-muted"><i class="fa-regular fa-clock me-1"></i> '.e($date).'</small>
