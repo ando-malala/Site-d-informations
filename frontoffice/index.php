@@ -1,179 +1,229 @@
+<?php
+include_once '../backoffice/connect/Connect.php';
+
+function e($value) {
+    return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
+}
+
+function excerptText($html, $maxLength = 180) {
+    $text = trim(strip_tags((string) $html));
+    if (mb_strlen($text) <= $maxLength) return $text;
+    return mb_substr($text, 0, $maxLength) . '...';
+}
+
+$articles = [];
+$error = '';
+// Initialise un tableau vide pour les catégories
+$categories = [];
+
+try {
+    $conn = getConnection();
+    
+    // ... [Tes autres requêtes existantes pour les articles] ...
+
+    // Nouvelle requête : Récupérer les catégories pour la navbar
+    $catSql = "SELECT id, name FROM category_article ORDER BY name ASC";
+    $catStmt = $conn->prepare($catSql);
+    $catStmt->execute();
+    $categories = $catStmt->get_result()->fetch_all(MYSQLI_ASSOC);
+
+    closeConnection($conn);
+} catch (Throwable $exception) {
+    $error = $exception->getMessage();
+}
+
+try {
+    $conn = getConnection();
+    // On ne sélectionne que les articles 'publie'
+    $sql = "SELECT
+                a.id, a.title, a.slug, a.summary, a.created_at,
+                c.name AS category_name,
+                COALESCE(ai_main.image_url, ai_any.image_url) AS image_url
+            FROM article a
+            LEFT JOIN category_article c ON c.id = a.category_id
+            LEFT JOIN article_image ai_main ON ai_main.article_id = a.id AND ai_main.is_main = 1
+            LEFT JOIN article_image ai_any ON ai_any.article_id = a.id
+            WHERE a.status = 'publie'
+            GROUP BY a.id
+            ORDER BY a.created_at DESC LIMIT 10";
+    $stmt = $conn->prepare($sql);
+    $stmt->execute();
+    $articles = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    closeConnection($conn);
+} catch (Throwable $exception) {
+    $error = $exception->getMessage();
+}
+
+$defaultHeroImage = 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=1200&q=80';
+$defaultCardImage = 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&w=400&q=80';
+
+$heroArticle = $articles[0] ?? null;
+$listArticles = array_slice($articles, 1, 4); // Les 4 suivants pour les cartes
+$filInfo = array_slice($articles, 5); // Le reste pour le fil info
+?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>InfoFlash | Votre source d'actualités</title>
-    <!-- Bootstrap 5 CSS -->
+    <title>InfoFlash | L'actualité en continu</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome pour les icônes -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700;900&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
     <style>
-        body { background-color: #f8f9fa; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        .navbar-brand { font-weight: bold; color: #dc3545 !important; }
-        .hero-section { background: #fff; padding: 40px 0; border-bottom: 1px solid #ddd; }
-        .card { border: none; transition: transform 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .card:hover { transform: translateY(-5px); }
-        .category-badge { font-size: 0.8rem; text-transform: uppercase; font-weight: bold; }
-        .footer { background: #212529; color: white; padding: 50px 0; margin-top: 50px; }
+        body { font-family: 'Open Sans', sans-serif; background-color: #fcfcfc; color: #111; }
+        h1, h2, h3, h4, h5, .logo-text { font-family: 'Merriweather', serif; font-weight: 700; color: #000; }
+        
+        .logo-text { font-size: 3rem; letter-spacing: -1px; }
+        .journal-header { border-top: 1px solid #ccc; border-bottom: 2px solid #000; background: #fff; }
+        .nav-link { color: #333; font-weight: 600; text-transform: uppercase; font-size: 0.85rem; }
+        
+        /* Grille éditoriale */
+        .article-border { border-right: 1px solid #e0e0e0; }
+        .hero-title { font-size: 2.5rem; line-height: 1.1; }
+        .category-label { color: #b71c1c; font-size: 0.75rem; text-transform: uppercase; font-weight: 700; font-family: 'Open Sans', sans-serif; }
+        
+        /* Fil info */
+        .fil-info-item { border-bottom: 1px solid #eee; padding-bottom: 15px; margin-bottom: 15px; }
+        .fil-info-time { color: #b71c1c; font-weight: 600; font-size: 0.8rem; }
+        
+        a.text-dark:hover { color: #b71c1c !important; text-decoration: underline !important; }
+        @media (max-width: 991px) { .article-border { border-right: none; } }
     </style>
 </head>
 <body>
 
-    <!-- Barre de navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
+    <header class="bg-white pt-4 pb-2">
+        <div class="container text-center">
+            <div class="logo-text">INFOFLASH</div>
+            <p class="text-muted small fst-italic mb-2">Édition en continu &mdash; <?php echo date('l j F Y'); ?></p>
+        </div>
+    </header>
+
+<nav class="navbar navbar-expand-lg navbar-light journal-header mb-4 sticky-top">
         <div class="container">
-            <a class="navbar-brand" href="#"><i class="fa-solid fa-newspaper me-2"></i>INFOFLASH</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
-                    <li class="nav-item"><a class="nav-link active" href="#">Accueil</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#">Politique</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#">Technologie</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#">Sport</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#">Culture</a></li>
+            <div class="collapse navbar-collapse justify-content-center" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link px-3 active" href="index.php">Actualités</a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link px-3 active" href="pages/article.php">Articles</a>
+                    </li>
+                    
+                    <?php foreach ($categories as $cat): ?>
+                        <li class="nav-item">
+                            <a class="nav-link px-3" href="pages/article.php?category=<?php echo e($cat['id']); ?>">
+                                <?php echo e($cat['name']); ?>
+                            </a>
+                        </li>
+                    <?php endforeach; ?>
+
+                    <li class="nav-item">
+                        <a class="nav-link px-3 text-danger" href="pages/article.php">
+                            <i class="fa-solid fa-magnifying-glass me-1"></i>Rechercher
+                        </a>
+                    </li>
                 </ul>
-                <a href="../backoffice/pages/index.php" class="btn btn-outline-light">Accès Admin</a>
             </div>
         </div>
     </nav>
 
-    <!-- Section À la une (Hero) -->
-    <header class="hero-section mb-4">
-        <div class="container">
-            <div class="row align-items-center">
-                <div class="col-lg-8">
-                    <img src="https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=800&q=80" class="img-fluid rounded mb-3 mb-lg-0" alt="News">
-                </div>
-                <div class="col-lg-4">
-                    <span class="badge bg-danger mb-2 category-badge">Dernière minute</span>
-                    <h1 class="display-5 fw-bold">Titre de l'information majeure du jour</h1>
-                    <p class="lead text-muted">Voici un résumé accrocheur de l'actualité principale. Ce texte est conçu pour donner envie aux lecteurs d'en savoir plus sur cet événement important.</p>
-                    <a href="#" class="btn btn-primary btn-lg">Lire la suite</a>
-                </div>
-            </div>
-        </div>
-    </header>
-
     <main class="container">
-        <div class="row">
-            <!-- Colonne Principale : Liste d'articles -->
-            <div class="col-lg-8">
-                <h3 class="mb-4 border-bottom pb-2">Dernières Actualités</h3>
-                
-                <div class="row g-4">
-                    <?php
-                    // Simulation de données provenant d'une base de données
-                    $articles = [
-                        [
-                            "titre" => "L'IA révolutionne le monde du travail",
-                            "image" => "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&w=400&q=80",
-                            "cat" => "Techno",
-                            "date" => "Il y a 2 heures"
-                        ],
-                        [
-                            "titre" => "Exploration spatiale : une nouvelle étape franchie",
-                            "image" => "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=400&q=80",
-                            "cat" => "Science",
-                            "date" => "Il y a 5 heures"
-                        ],
-                        [
-                            "titre" => "Économie mondiale : les prévisions pour 2024",
-                            "image" => "https://images.unsplash.com/photo-1611974717483-58285a810e0e?auto=format&fit=crop&w=400&q=80",
-                            "cat" => "Économie",
-                            "date" => "Hier"
-                        ],
-                        [
-                            "titre" => "L'équipe nationale remporte la finale",
-                            "image" => "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=400&q=80",
-                            "cat" => "Sport",
-                            "date" => "Hier"
-                        ]
-                    ];
+        <?php if (!empty($error)): ?>
+            <div class="alert alert-danger rounded-0 border-0 border-start border-danger border-4">Erreur : <?php echo e($error); ?></div>
+        <?php endif; ?>
 
-                    foreach ($articles as $article) {
-                        echo '
+        <div class="row">
+            <div class="col-lg-9 article-border pe-lg-4">
+                
+                <?php if ($heroArticle): ?>
+                <article class="mb-5">
+                    <div class="row">
+                        <div class="col-md-7">
+                            <span class="category-label"><?php echo e($heroArticle['category_name'] ?? 'Événement'); ?></span>
+                            <h1 class="hero-title mt-2 mb-3">
+                                <a href="lire.php?slug=<?php echo e($heroArticle['slug']); ?>" class="text-dark text-decoration-none">
+                                    <?php echo e($heroArticle['title']); ?>
+                                </a>
+                            </h1>
+                            <p class="lead fs-5 text-secondary" style="font-family: 'Merriweather', serif;">
+                                <?php echo e(excerptText($heroArticle['summary'] ?? '', 250)); ?>
+                            </p>
+                        </div>
+                        <div class="col-md-5">
+                            <a href="lire.php?slug=<?php echo e($heroArticle['slug']); ?>">
+                                <img src="<?php echo e($heroArticle['image_url'] ?? $defaultHeroImage); ?>" class="img-fluid w-100 mb-3" alt="Image à la une">
+                            </a>
+                        </div>
+                    </div>
+                </article>
+                <?php endif; ?>
+
+                <hr class="mb-4">
+
+                <div class="row g-4 mb-4">
+                    <?php foreach ($listArticles as $article): ?>
                         <div class="col-md-6">
-                            <div class="card h-100">
-                                <img src="'.$article['image'].'" class="card-img-top" alt="...">
-                                <div class="card-body">
-                                    <span class="text-primary fw-bold category-badge">'.$article['cat'].'</span>
-                                    <h5 class="card-title mt-2">'.$article['titre'].'</h5>
-                                    <p class="card-text text-muted">Petit extrait du contenu de l\'article pour donner un aperçu au lecteur...</p>
-                                </div>
-                                <div class="card-footer bg-white border-0">
-                                    <small class="text-muted"><i class="fa-regular fa-clock me-1"></i> '.$article['date'].'</small>
-                                </div>
-                            </div>
-                        </div>';
-                    }
-                    ?>
+                            <article>
+                                <span class="category-label"><?php echo e($article['category_name'] ?? 'Actualité'); ?></span>
+                                <a href="lire.php?slug=<?php echo e($article['slug']); ?>" class="text-dark text-decoration-none">
+                                    <h3 class="h4 mt-1 mb-2"><?php echo e($article['title']); ?></h3>
+                                </a>
+                                <p class="text-muted small mb-2"><?php echo e(excerptText($article['summary'] ?? '', 120)); ?></p>
+                                    <img src="<?php echo e($article['image_url'] ?? $defaultHeroImage); ?>" class="img-fluid w-100 mb-3" alt="Image à la une">
+                            
+                            </article>
+                        </div>
+                    <?php endforeach; ?>
                 </div>
             </div>
 
-            <!-- Sidebar (Colonne de droite) -->
-            <aside class="col-lg-4">
-                <div class="bg-white p-4 shadow-sm rounded mb-4">
-                    <h4 class="mb-3">Newsletter</h4>
-                    <p class="small text-muted">Recevez l'essentiel de l'actu chaque matin dans votre boîte mail.</p>
-                    <form>
-                        <input type="email" class="form-control mb-2" placeholder="votre@email.com">
-                        <button class="btn btn-danger w-100" type="button">S'abonner</button>
-                    </form>
+            <aside class="col-lg-3 ps-lg-4">
+                <h4 class="border-bottom border-dark pb-2 mb-4">Le fil info</h4>
+                
+                <div class="fil-info-container">
+                    <?php 
+                    if (empty($filInfo)) {
+                        echo '<p class="small text-muted fst-italic">Le fil est calme pour le moment.</p>';
+                    }
+                    foreach ($filInfo as $info): 
+                        $time = !empty($info['created_at']) ? date('H:i', strtotime($info['created_at'])) : '';
+                    ?>
+                        <div class="fil-info-item">
+                            <span class="fil-info-time me-2"><?php echo e($time); ?></span>
+                            <a href="lire.php?slug=<?php echo e($info['slug']); ?>" class="text-dark text-decoration-none small fw-bold">
+                                <?php echo e($info['title']); ?>
+                            </a>
+                        </div>
+                    <?php endforeach; ?>
                 </div>
 
-                <div class="bg-white p-4 shadow-sm rounded">
-                    <h4 class="mb-3">Populaire</h4>
-                    <ul class="list-group list-group-flush">
-                        <li class="list-group-item d-flex align-items-center">
-                            <span class="badge bg-dark me-3">1</span>
-                            <a href="#" class="text-decoration-none text-dark small fw-bold">Les 10 destinations à visiter absolument cet été</a>
-                        </li>
-                        <li class="list-group-item d-flex align-items-center">
-                            <span class="badge bg-dark me-3">2</span>
-                            <a href="#" class="text-decoration-none text-dark small fw-bold">Comment sécuriser ses données en ligne ?</a>
-                        </li>
-                        <li class="list-group-item d-flex align-items-center">
-                            <span class="badge bg-dark me-3">3</span>
-                            <a href="#" class="text-decoration-none text-dark small fw-bold">Nouvelle loi sur le télétravail : ce qu'il faut savoir</a>
-                        </li>
-                    </ul>
+                <div class="bg-light p-3 mt-4 text-center border">
+                    <h5 class="h6 fw-bold">Soutenez notre rédaction</h5>
+                    <p class="small mb-3">Abonnez-vous pour un accès illimité à nos enquêtes exclusives.</p>
+                    <button class="btn btn-dark btn-sm rounded-0 w-100">S'abonner</button>
                 </div>
             </aside>
         </div>
     </main>
 
-    <!-- Pied de page -->
-    <footer class="footer">
+    <footer class="bg-dark text-white py-5 mt-5">
         <div class="container text-center">
-            <div class="row">
-                <div class="col-md-4 mb-3">
-                    <h5>À propos</h5>
-                    <p class="small text-secondary">InfoFlash est un site de démonstration pour un projet web d'actualités en temps réel.</p>
-                </div>
-                <div class="col-md-4 mb-3">
-                    <h5>Liens utiles</h5>
-                    <ul class="list-unstyled">
-                        <li><a href="#" class="text-secondary text-decoration-none">Mentions légales</a></li>
-                        <li><a href="#" class="text-secondary text-decoration-none">Contact</a></li>
-                        <li><a href="#" class="text-secondary text-decoration-none">Publicité</a></li>
-                    </ul>
-                </div>
-                <div class="col-md-4 mb-3">
-                    <h5>Suivez-nous</h5>
-                    <a href="#" class="text-white me-3"><i class="fa-brands fa-facebook fa-xl"></i></a>
-                    <a href="#" class="text-white me-3"><i class="fa-brands fa-twitter fa-xl"></i></a>
-                    <a href="#" class="text-white"><i class="fa-brands fa-instagram fa-xl"></i></a>
-                </div>
-            </div>
-            <hr class="mt-4 bg-secondary">
-            <p class="mb-0 small text-secondary">&copy; <?php echo date("Y"); ?> InfoFlash - Tous droits réservés.</p>
+            <h2 class="logo-text text-white mb-4 fs-3">INFOFLASH</h2>
+            <ul class="list-inline small mb-0">
+                <li class="list-inline-item"><a href="#" class="text-white text-decoration-none">Mentions légales</a></li>
+                <li class="list-inline-item mx-3 text-secondary">|</li>
+                <li class="list-inline-item"><a href="#" class="text-white text-decoration-none">Politique de confidentialité</a></li>
+                <li class="list-inline-item mx-3 text-secondary">|</li>
+                <li class="list-inline-item"><a href="#" class="text-white text-decoration-none">Nous contacter</a></li>
+            </ul>
         </div>
     </footer>
 
-    <!-- Bootstrap Bundle with Popper -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
