@@ -35,7 +35,7 @@
                     <li class="nav-item"><a class="nav-link" href="#">Sport</a></li>
                     <li class="nav-item"><a class="nav-link" href="#">Culture</a></li>
                 </ul>
-                <a href="../frontend/index.php" class="btn btn-outline-light">Frontend</a>
+                <a href="../../frontend/index.php" class="btn btn-outline-light">Frontend</a>
             </div>
         </div>
     </nav>
