@@ -1,3 +1,57 @@
+<?php
+include_once '../connect/Connect.php';
+
+function e($value) {
+    return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
+}
+
+function excerptText($html, $maxLength = 180) {
+    $text = trim(strip_tags((string) $html));
+    if (mb_strlen($text) <= $maxLength) {
+        return $text;
+    }
+    return mb_substr($text, 0, $maxLength) . '...';
+}
+
+$articles = [];
+$error = '';
+
+try {
+    $conn = getConnection();
+    $sql = "SELECT
+                a.id,
+                a.title,
+                a.slug,
+                a.summary,
+                a.content,
+                a.status,
+                a.created_at,
+                c.name AS category_name,
+                COALESCE(ai_main.image_url, ai_any.image_url) AS image_url
+            FROM article a
+            LEFT JOIN category_article c ON c.id = a.category_id
+            LEFT JOIN article_image ai_main ON ai_main.article_id = a.id AND ai_main.is_main = 1
+            LEFT JOIN article_image ai_any ON ai_any.article_id = a.id
+            GROUP BY a.id
+            ORDER BY a.created_at DESC";
+    $stmt = $conn->prepare($sql);
+    $stmt->execute();
+    $articles = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    closeConnection($conn);
+} catch (Throwable $exception) {
+    $error = $exception->getMessage();
+}
+
+$defaultHeroImage = 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=800&q=80';
+$defaultCardImage = 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&w=400&q=80';
+
+$heroArticle = $articles[0] ?? null;
+$listArticles = array_slice($articles, 1);
+
+if (empty($listArticles) && $heroArticle !== null) {
+    $listArticles = [$heroArticle];
+}
+?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -46,13 +100,14 @@
         <div class="container">
             <div class="row align-items-center">
                 <div class="col-lg-8">
-                    <img src="https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=800&q=80" class="img-fluid rounded mb-3 mb-lg-0" alt="News">
+                    <?php $heroImage = $heroArticle['image_url'] ?? $defaultHeroImage; ?>
+                    <img src="<?php echo e($heroImage); ?>" class="img-fluid rounded mb-3 mb-lg-0" alt="News">
                 </div>
                 <div class="col-lg-4">
                     <span class="badge bg-danger mb-2 category-badge">Dernière minute</span>
-                    <h1 class="display-5 fw-bold">Titre de l'information majeure du jour</h1>
-                    <p class="lead text-muted">Voici un résumé accrocheur de l'actualité principale. Ce texte est conçu pour donner envie aux lecteurs d'en savoir plus sur cet événement important.</p>
-                    <a href="#" class="btn btn-primary btn-lg">Lire la suite</a>
+                    <h1 class="display-5 fw-bold"><?php echo e($heroArticle['title'] ?? 'Aucun article disponible'); ?></h1>
+                    <p class="lead text-muted"><?php echo e(excerptText($heroArticle['summary'] ?? $heroArticle['content'] ?? 'Ajoutez des articles depuis le backoffice pour les voir ici.', 220)); ?></p>
+                    <a href="Article.php" class="btn btn-primary btn-lg">Voir les articles</a>
                 </div>
             </div>
         </div>
@@ -63,49 +118,33 @@
             <!-- Colonne Principale : Liste d'articles -->
             <div class="col-lg-8">
                 <h3 class="mb-4 border-bottom pb-2">Dernières Actualités</h3>
+                <?php if (!empty($error)): ?>
+                    <div class="alert alert-danger">Erreur chargement articles : <?php echo e($error); ?></div>
+                <?php endif; ?>
                 
                 <div class="row g-4">
                     <?php
-                    // Simulation de données provenant d'une base de données
-                    $articles = [
-                        [
-                            "titre" => "L'IA révolutionne le monde du travail",
-                            "image" => "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&w=400&q=80",
-                            "cat" => "Techno",
-                            "date" => "Il y a 2 heures"
-                        ],
-                        [
-                            "titre" => "Exploration spatiale : une nouvelle étape franchie",
-                            "image" => "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=400&q=80",
-                            "cat" => "Science",
-                            "date" => "Il y a 5 heures"
-                        ],
-                        [
-                            "titre" => "Économie mondiale : les prévisions pour 2024",
-                            "image" => "https://images.unsplash.com/photo-1611974717483-58285a810e0e?auto=format&fit=crop&w=400&q=80",
-                            "cat" => "Économie",
-                            "date" => "Hier"
-                        ],
-                        [
-                            "titre" => "L'équipe nationale remporte la finale",
-                            "image" => "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=400&q=80",
-                            "cat" => "Sport",
-                            "date" => "Hier"
-                        ]
-                    ];
+                    if (empty($listArticles)) {
+                        echo '<div class="col-12"><div class="alert alert-info mb-0">Aucun article à afficher pour le moment.</div></div>';
+                    }
 
-                    foreach ($articles as $article) {
+                    foreach ($listArticles as $article) {
+                        $cardImage = !empty($article['image_url']) ? $article['image_url'] : $defaultCardImage;
+                        $category = !empty($article['category_name']) ? $article['category_name'] : 'Non classé';
+                        $date = !empty($article['created_at']) ? date('d/m/Y H:i', strtotime($article['created_at'])) : '-';
+                        $summary = excerptText($article['summary'] ?? $article['content'] ?? '', 140);
+
                         echo '
                         <div class="col-md-6">
                             <div class="card h-100">
-                                <img src="'.$article['image'].'" class="card-img-top" alt="...">
+                                <img src="'.e($cardImage).'" class="card-img-top" alt="'.e($article['title']).'">
                                 <div class="card-body">
-                                    <span class="text-primary fw-bold category-badge">'.$article['cat'].'</span>
-                                    <h5 class="card-title mt-2">'.$article['titre'].'</h5>
-                                    <p class="card-text text-muted">Petit extrait du contenu de l\'article pour donner un aperçu au lecteur...</p>
+                                    <span class="text-primary fw-bold category-badge">'.e($category).'</span>
+                                    <h5 class="card-title mt-2">'.e($article['title']).'</h5>
+                                    <p class="card-text text-muted">'.e($summary).'</p>
                                 </div>
                                 <div class="card-footer bg-white border-0">
-                                    <small class="text-muted"><i class="fa-regular fa-clock me-1"></i> '.$article['date'].'</small>
+                                    <small class="text-muted"><i class="fa-regular fa-clock me-1"></i> '.e($date).'</small>
                                 </div>
                             </div>
                         </div>';
