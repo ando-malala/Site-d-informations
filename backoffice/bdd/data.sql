@@ -56,6 +56,36 @@ INSERT INTO article (title, slug, summary, content, status, source_id, category_
     'publie', 3, 2, 1
 );
 
+-- Article 4
+INSERT INTO article (title, slug, summary, content, status, source_id, category_id, user_id) VALUES 
+(
+    '<h1>Cyber-attaques ciblées : perturbations dans les réseaux énergétiques</h1>', 
+    'cyber-attaques-reseaux-energetiques', 
+    '<p>Plusieurs opérateurs signalent des <strong>interruptions temporaires</strong> attribuées à des intrusions coordonnées.</p>', 
+    '<h2>Chronologie</h2><p>Les premières alertes ont été relevées au cours de la nuit, avec des tentatives d''accès non autorisées sur des sous-stations.</p><h3>Conséquences</h3><ul><li>Ralentissements dans la distribution</li><li>Renforcement des protocoles de sécurité</li><li>Enquête conjointe en cours</li></ul>', 
+    'publie', 2, 4, 1
+);
+
+-- Article 5
+INSERT INTO article (title, slug, summary, content, status, source_id, category_id, user_id) VALUES 
+(
+    '<h1>Couloirs humanitaires : discussions sur une trêve limitée</h1>', 
+    'couloirs-humanitaires-treve-limitee', 
+    '<p>Des organisations internationales réclament un accès sécurisé pour l''aide d''urgence.</p>', 
+    '<h2>Enjeux</h2><p>Les négociateurs travaillent sur des fenêtres de passage encadrées, avec un mécanisme de vérification.</p><p><em>La priorité est la protection des civils</em> et la livraison de médicaments critiques.</p>', 
+    'publie', 4, 2, 1
+);
+
+-- Article 6
+INSERT INTO article (title, slug, summary, content, status, source_id, category_id, user_id) VALUES 
+(
+    '<h1>Chaînes d''approvisionnement : pression accrue sur les importations</h1>', 
+    'pression-importations-chaine-approvisionnement', 
+    '<p>Les restrictions logistiques réduisent l''arrivage de pièces industrielles et de biens essentiels.</p>', 
+    '<h2>Effets sur le terrain</h2><p>Les entreprises locales adaptent leur production face aux retards de livraison.</p><h3>Mesures annoncées</h3><ul><li>Stocks stratégiques mobilisés</li><li>Subventions ciblées</li><li>Contrôles renforcés sur les prix</li></ul>', 
+    'publie', 1, 3, 1
+);
+
 -- 6. Insertion des images (liées aux articles par ID)
 -- Image pour l'article 1 (Militaires)
 INSERT INTO article_image (article_id, image_url, alt_text, is_main) VALUES 
@@ -69,3 +99,16 @@ INSERT INTO article_image (article_id, image_url, alt_text, is_main) VALUES
 -- Image pour l'article 3 (Diplomatie)
 INSERT INTO article_image (article_id, image_url, alt_text, is_main) VALUES 
 (3, 'https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?w=800', 'Salle de conférence diplomatique', 1);
+
+-- Image pour l'article 4 (Cyber-Attaques)
+INSERT INTO article_image (article_id, image_url, alt_text, is_main) VALUES 
+(4, 'https://images.unsplash.com/photo-1510511459019-5dda7724fd87?w=800', 'Serveurs et réseau informatique', 1);
+
+-- Image pour l'article 5 (Diplomatie / Humanitaire)
+INSERT INTO article_image (article_id, image_url, alt_text, is_main) VALUES 
+(5, 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=800', 'Distribution d''aide humanitaire', 1);
+
+-- Images pour l'article 6 (Économie)
+INSERT INTO article_image (article_id, image_url, alt_text, is_main) VALUES 
+(6, 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=800', 'Conteneurs et chaîne logistique', 1),
+(6, 'https://images.unsplash.com/photo-1465447142348-e9952c393450?w=800', 'Atelier industriel', 0);
